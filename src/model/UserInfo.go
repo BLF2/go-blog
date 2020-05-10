@@ -1,19 +1,19 @@
 package model
 
 import (
-	"database/sql"
 	"errors"
+	"gopkg.in/guregu/null.v4"
 	"strings"
 	"time"
 )
 
 type UserInfo struct {
-	Id int64 `db:"id"`
-	LoginId sql.NullString `db:"login_id"`
-	NickName sql.NullString `db:"nick_name"`
-	Password sql.NullString `db:"password"`
-	CreateTime time.Time  `db:"create_time"`
-	CreateUser sql.NullString `db:"create_user"`
+	Id int64 `db:"id" json:"id"`
+	LoginId null.String `db:"login_id" json:"loginId"`
+	NickName null.String `db:"nick_name" json:"nickName"`
+	Password null.String `db:"password" json:"password"`
+	CreateTime time.Time  `db:"create_time" json:"createTime"`
+	CreateUser null.String `db:"create_user" json:"createUser"`
 }
 
 func GetUserInfoAllColumns() string {
