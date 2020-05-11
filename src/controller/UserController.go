@@ -2,6 +2,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	uuid "github.com/satori/go.uuid"
+	"go-blog/src/cache"
 	"go-blog/src/constant"
 	"go-blog/src/dao"
 	"go-blog/src/dto"
@@ -79,4 +81,61 @@ func GetById(context *gin.Context) {
 	}
 
 	context.JSON(http.StatusOK, result)
+}
+
+func Login(ctx *gin.Context) {
+
+	var userInfo  = model.UserInfo{}
+
+	err := ctx.BindJSON(&userInfo)
+
+	var result interface{}
+	if err != nil{
+		log.Println("解析登陆信息失败")
+		result = dto.BaseResult{
+			Code: constant.FAIL.Code,
+			Msg: "解析登陆信息失败",
+		}
+	}else{
+		var loginId = userInfo.LoginId.String
+		var pass = userInfo.Password.String
+
+		var userInfoQuery *model.UserInfo
+		userInfoQuery,err= dao.PublicUserInfoDao.SelectByLoginId(loginId)
+
+		if err != nil {
+			
+			log.Println("查询数据出错")
+			result = dto.BaseResult{
+				Code: constant.FAIL.Code,
+				Msg:  "查询数据出错,请稍后重试",
+			}
+			ctx.JSON(http.StatusOK,result)
+			return
+		}
+
+		if userInfoQuery != nil{
+
+			if userInfoQuery.Password.String == pass{
+
+				token := uuid.NewV4().String()
+				cache.CacheUtil.Set([]byte(token),[]byte(loginId),constant.SESSION_EXPORE_SECONDS)
+				result = dto.BaseResult{
+					Code: constant.SUCCESS.Code,
+					Msg:  constant.SUCCESS.Msg,
+					Data: token,
+				}
+
+				ctx.JSON(http.StatusOK,result)
+				return
+			}
+		}
+
+		ctx.JSON(http.StatusOK,dto.BaseResult{
+			Code: constant.SUCCESS.Code,
+			Msg:  "用户名不存在或者用户名与密码不匹配",
+		})
+	}
+
+	ctx.JSON(http.StatusOK,result)
 }
